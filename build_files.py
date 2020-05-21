@@ -5,6 +5,9 @@ import json
 from freeling import Freeling
 from html import unescape
 import io
+import sys 
+
+sys.setrecursionlimit(10**6) 
 
 fl = Freeling()
 g = Graph()
