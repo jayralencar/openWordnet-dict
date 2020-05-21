@@ -82,6 +82,7 @@ def get_translation(gloss, exactly=False):
     res = requests.get(
         'https://mymemory.translated.net/api/ajaxfetch?q='+gloss+'&langpair=en|pt-br&mtonly=1')
     result = json.loads(res.text)
+    res.close()
     if result['responseStatus'] == 429:
         # raise Exception('Estourou o limite!')
         return gloss
