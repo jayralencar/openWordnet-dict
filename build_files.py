@@ -79,8 +79,13 @@ def proceed_words(prepared_word, new_offset, symbols, data_items):
     lemmas[pos_name][prepared_word]['symbols'] += list(set(lemmas[pos_name][prepared_word]['symbols'] + symbols))
 
 def get_translation(gloss, exactly=False):
-    res = requests.get(
-        'https://mymemory.translated.net/api/ajaxfetch?q='+gloss+'&langpair=en|pt-br&mtonly=1')
+    # res = requests.get(
+        # 'https://mymemory.translated.net/api/ajaxfetch?q='+gloss+'&langpair=en|pt-br&mtonly=1')
+    try:
+        res = requests.get('https://api.mymemory.translated.net/get?q='+gloss+'&langpair=en|pt-br')
+    except:
+        return gloss
+    
     result = json.loads(res.text)
     res.close()
     if result['responseStatus'] == 429:

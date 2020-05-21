@@ -1,3 +1,5 @@
-import sys
-print(sys.getrecursionlimit())
-print(10**6)
+file = open("./wordnet/data.adj",'a')
+
+file.write("a")
+
+file.close()
