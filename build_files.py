@@ -26,12 +26,18 @@ pos_mapping = {"v":"verb", "n":"noun", "a":"adj", "s":"adj", "r":"adv"}
 
 pwn_to_ownpt = open("./wordnet/pwn_to_ownpt.txt",'w')
 
+
 files = [
     "noun",
     "verb",
     "adj",
     "adv"
 ]
+
+noun_data_file = open("{0}/data.noun".format(nltk_wordnet_data), "r")
+verb_data_file = open("{0}/data.verb".format(nltk_wordnet_data), "r")
+adj_data_file = open("{0}/data.adj".format(nltk_wordnet_data), "r")
+adv_data_file = open("{0}/data.adv".format(nltk_wordnet_data), "r")
 
 offset_mapping = {
     "noun":{},
@@ -159,11 +165,23 @@ def save_synset(offset, line):
             relations = []
             for _i in range(idx, len(data_items)):
                 if len(data_items[_i]) == 8:
-                    item_file = open("{0}/data.{1}".format(nltk_wordnet_data, pos_mapping[data_items[_i+1]]), "r")
-                    item_file.seek(int(data_items[_i]))
-                    n_of = save_synset(data_items[_i], item_file.readline())
+                    if data_items[_i+1] == 'n':
+                        noun_data_file.seek(int(data_items[_i]))
+                        _line = noun_data_file.readline()
+                    elif data_items[_i+1] == 'v':
+                        verb_data_file.seek(int(data_items[_i]))
+                        _line = verb_data_file.readline()
+                    elif data_items[_i+1] == 'r':
+                        adv_data_file.seek(int(data_items[_i]))
+                        _line = adv_data_file.readline()
+                    elif data_items[_i+1] in ['s','a']:
+                        adj_data_file.seek(int(data_items[_i]))
+                        _line = adj_data_file.readline()
+                    
+                    # item_file = open("{0}/data.{1}".format(nltk_wordnet_data, pos_mapping[data_items[_i+1]]), "r")
+                    # item_file.seek(int(data_items[_i]))
+                    n_of = save_synset(data_items[_i], _line)
                     relations.append(n_of)
-                    item_file.close()
                 else:
                     relations.append(data_items[_i])
             new_data_line = "{0} | {1}".format(" ".join(part1+part2+relations), unescape(pt_gloss))
