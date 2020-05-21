@@ -122,6 +122,7 @@ def save_synset(offset, line):
             word_label = g.label(sense)
             prepared_word = "_".join(str(word_label.strip()).split(" ")).lower()
             proceed_words(prepared_word, new_offset, symbols, data_items)
+            words.append(prepared_word)
 
         if len(words) == 0:
             for item in data_items[4:idx]:
@@ -129,6 +130,7 @@ def save_synset(offset, line):
                     translated = get_translation(" ".join(item.split("_")), exactly=True)
                     prepared_word = "_".join(translated.split(" ")).lower()
                     proceed_words(prepared_word, new_offset, symbols, data_items)
+                    words.append(prepared_word)
         pt_gloss += "\n"
         part1 = [new_offset]+data_items[1:3]+[str(len(words)).zfill(2)]
         part2 = []
