@@ -121,7 +121,10 @@ def save_synset(offset, line):
             new_offset = int(new_offset_lists[pos_name][-1]) + len(new_lines[pos_name][new_offset_lists[pos_name][-1]].encode("utf-8"))
         new_offset = str(new_offset).zfill(8)
         idx = [i for i in range(len(data_items))  if len(data_items[i]) == 3 and data_items[i].isnumeric()][0]
-        rdf_offset = "synset-{0}-{1}".format(data_items[0], data_items[2])
+        pos_ = data_items[2]
+        if pos_ == 's':
+            pos_ = 'a'
+        rdf_offset = "synset-{0}-{1}".format(data_items[0], pos_)
 
         synset = URIRef(instances[rdf_offset])
 
