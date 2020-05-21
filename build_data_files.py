@@ -46,12 +46,6 @@ def get_translation(gloss, exactly=False):
 
 def insert_sense_index(lemma, offset, pos,lexname_index):
     
-    # ss = wn.of2ss(offset)
-    # lexname_index=None
-    # for lemma in ss.lemmas():
-    #     lexname_index = lemma._lexname_index
-    #     break
-    # lemma%lex_sense:lex_filenum:lex_id:head_word:head_id
     sense_key = "{0}%{1}:{2}:{3}::".format(lemma,synset_types[pos],str(lexname_index).zfill(2),"01")
     item = "{0} {1} {2} {3}".format(sense_key, offset, '01', '0')
     sense_file.write(item+"\n")
@@ -79,13 +73,11 @@ for file_ in files:
                 pt_gloss = pt_gloss.value
             
             words = []
-
             symbols = list(set([item for item in data_items[idx:] if not item.isnumeric() and item not in pos_tags]))
             for _, _, sense in g.triples((synset, wnpt.containsWordSense, None)):
                 word_label = g.label(sense)
                 prepared_word = "_".join(str(word_label.strip()).split(" ")).lower()
                 insert_sense_index(prepared_word,new_offset,data_items[2], data_items[1])
-                # word_pos = "{0}.{1}".format(prepared_word, data_items[2])
                 if prepared_word not in lemmas:
                     lemmas[prepared_word] = {
                         "symbols": [],
