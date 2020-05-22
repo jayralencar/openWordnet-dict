@@ -19,7 +19,13 @@ instances = Namespace("https://w3id.org/own-pt/wn30-pt/instances/")
 # synset_offset  lex_filenum  ss_type  w_cnt  word  lex_id  [word  lex_id...]  p_cnt  [ptr...]  [frames...]  |   gloss 
 sense_file = open('./wordnet/index.sense', 'w', encoding="utf-8")
 
-pwn_to_ownpt = open("./wordnet/pwn_to_ownpt.txt",'w')
+pwn_to_ownpt = {
+    "noun":open("./wordnet/pwn_to_ownpt.noun",'w', encoding="utf-8"),
+    "verb":open("./wordnet/pwn_to_ownpt.verb",'w', encoding="utf-8"),
+    "adv":open("./wordnet/pwn_to_ownpt.adv",'w', encoding="utf-8"),
+    "adj":open("./wordnet/pwn_to_ownpt.adj",'w', encoding="utf-8"),
+}
+
 
 files = [
     "noun",
@@ -53,7 +59,7 @@ def insert_sense_index(lemma, offset, pos,lexname_index):
 
 for file_ in files:
     origin_file = open("{0}/data.{1}".format(nltk_wordnet_data, file_), "r")
-    destination_file = open("{0}/data.{1}".format("./wordnet", file_),"a", encoding="utf-8")
+    destination_file = open("{0}/temp_data.{1}".format("./wordnet", file_),"a", encoding="utf-8")
     destination_file.seek(0,io.SEEK_END)
     lemmas = {}
     for line in origin_file.readlines():
@@ -62,7 +68,8 @@ for file_ in files:
             data_items = _data.strip().split(" ")
             offset = "synset-{0}-{1}".format(data_items[0], data_items[2])
             new_offset = str(destination_file.tell()).zfill(8)
-            pwn_to_ownpt.write("{0}-{1} {2}-{1}\n".format(data_items[0],data_items[2], new_offset))
+
+            pwn_to_ownpt[file_].write("{0} {1}\n".format(data_items[0],new_offset))
             idx = [i for i in range(len(data_items))  if len(data_items[i]) == 3 and data_items[i].isnumeric()][0]
             synset = URIRef(instances[offset])
 
