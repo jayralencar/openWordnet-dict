@@ -35,8 +35,10 @@ files = [
 ]
 
 def get_translation(gloss, exactly=False):
-    res = requests.get(
-        'https://mymemory.translated.net/api/ajaxfetch?q='+gloss+'&langpair=en|pt-br&mtonly=1')
+    try:
+        res = requests.get('https://api.mymemory.translated.net/get?q='+gloss+'&langpair=en|pt-br')
+    except:
+        return gloss
     result = json.loads(res.text)
     if result['responseStatus'] == 429:
         # raise Exception('Estourou o limite!')
