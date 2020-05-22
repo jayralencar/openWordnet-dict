@@ -5,6 +5,22 @@ import json
 from freeling import Freeling
 from html import unescape
 import io
+import sqlite3
+
+connection = sqlite3.connect("./data/mapping.db")
+
+def insert_mapping(pwn, new_offset, pos):
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO mapping (pwn, new_offset, pos) VALUES (?,?,?)",(int(pwn), int(new_offset), pos,))
+    cursor.close()
+
+def offset_processed(pwn, pos):
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM mapping WHERE pwn = ? and pos = ?",(int(pwn),pos,))
+    item = cursor.fetchone()
+    cursor.close()
+    connection.commit()
+    return item is not None
 
 nltk_wordnet_data = "/home/jayr/nltk_data/corpora/wordnet"
 fl = Freeling()
@@ -68,61 +84,63 @@ for file_ in files:
         if not line.startswith(' '):
             _data, gloss = line.split("|")
             data_items = _data.strip().split(" ")
-            offset = "synset-{0}-{1}".format(data_items[0], data_items[2])
-            new_offset = str(destination_file.tell()).zfill(8)
+            if not offset_processed(data_items[0], file_):
+                offset = "synset-{0}-{1}".format(data_items[0], data_items[2])
+                new_offset = str(destination_file.tell()).zfill(8)
 
-            pwn_to_ownpt[file_].write("{0} {1}\n".format(data_items[0],new_offset))
-            idx = [i for i in range(len(data_items))  if len(data_items[i]) == 3 and data_items[i].isnumeric()][0]
-            synset = URIRef(instances[offset])
+                # pwn_to_ownpt[file_].write("{0} {1}\n".format(data_items[0],new_offset))
+                insert_mapping(data_items[0],new_offset, file_)
+                idx = [i for i in range(len(data_items))  if len(data_items[i]) == 3 and data_items[i].isnumeric()][0]
+                synset = URIRef(instances[offset])
 
-            pt_gloss = g.value(synset, wnpt.gloss, None)
-            if pt_gloss is None:
-                pt_gloss = get_translation(gloss.rstrip())
-            else:
-                pt_gloss = pt_gloss.value
-            
-            words = []
-            symbols = list(set([item for item in data_items[idx:] if not item.isnumeric() and item not in pos_tags]))
-            for _, _, sense in g.triples((synset, wnpt.containsWordSense, None)):
-                word_label = g.label(sense)
-                prepared_word = "_".join(str(word_label.strip()).split(" ")).lower()
-                insert_sense_index(prepared_word,new_offset,data_items[2], data_items[1])
-                if prepared_word not in lemmas:
-                    lemmas[prepared_word] = {
-                        "symbols": [],
-                        "synsets": [],
-                        "pos": data_items[2]
-                    }
-                lemmas[prepared_word]['synsets'].append(new_offset)
-                lemmas[prepared_word]['symbols'] += symbols
-                words.append(prepared_word)
-            
-            if len(words) == 0:
-                for item in data_items[4:idx]:
-                    if not item.isnumeric():
-                        translated = get_translation(" ".join(item.split("_")), exactly=True)
-                        prepared_word = "_".join(translated.split(" ")).lower()
-                        insert_sense_index(prepared_word,new_offset,data_items[2], data_items[1])
-                        if prepared_word not in lemmas:
-                            lemmas[prepared_word] = {
-                                "symbols": [],
-                                "synsets": [],
-                                "pos": data_items[2]
-                            }
-                        lemmas[prepared_word]['synsets'].append(new_offset)
-                        lemmas[prepared_word]['symbols'] = list(set(lemmas[prepared_word]['symbols'] + symbols))
-                        words.append(prepared_word)
-            
-            new_data_items = [new_offset]+data_items[1:3]+[str(len(words)).zfill(2)]
-            for word in words:
-                new_data_items.append(word)
-                new_data_items.append("0")
-            new_data_items += data_items[idx:]
-            # print(new_data_items)
-            # print(" ".join(new_data_items))
-            new_data_line = "{0} | {1}".format(" ".join(new_data_items), unescape(pt_gloss))
-            print(new_data_line)
-            destination_file.write(new_data_line+"\n")
+                pt_gloss = g.value(synset, wnpt.gloss, None)
+                if pt_gloss is None:
+                    pt_gloss = get_translation(gloss.rstrip())
+                else:
+                    pt_gloss = pt_gloss.value
+                
+                words = []
+                symbols = list(set([item for item in data_items[idx:] if not item.isnumeric() and item not in pos_tags]))
+                for _, _, sense in g.triples((synset, wnpt.containsWordSense, None)):
+                    word_label = g.label(sense)
+                    prepared_word = "_".join(str(word_label.strip()).split(" ")).lower()
+                    insert_sense_index(prepared_word,new_offset,data_items[2], data_items[1])
+                    if prepared_word not in lemmas:
+                        lemmas[prepared_word] = {
+                            "symbols": [],
+                            "synsets": [],
+                            "pos": data_items[2]
+                        }
+                    lemmas[prepared_word]['synsets'].append(new_offset)
+                    lemmas[prepared_word]['symbols'] += symbols
+                    words.append(prepared_word)
+                
+                if len(words) == 0:
+                    for item in data_items[4:idx]:
+                        if not item.isnumeric():
+                            translated = get_translation(" ".join(item.split("_")), exactly=True)
+                            prepared_word = "_".join(translated.split(" ")).lower()
+                            insert_sense_index(prepared_word,new_offset,data_items[2], data_items[1])
+                            if prepared_word not in lemmas:
+                                lemmas[prepared_word] = {
+                                    "symbols": [],
+                                    "synsets": [],
+                                    "pos": data_items[2]
+                                }
+                            lemmas[prepared_word]['synsets'].append(new_offset)
+                            lemmas[prepared_word]['symbols'] = list(set(lemmas[prepared_word]['symbols'] + symbols))
+                            words.append(prepared_word)
+                
+                new_data_items = [new_offset]+data_items[1:3]+[str(len(words)).zfill(2)]
+                for word in words:
+                    new_data_items.append(word)
+                    new_data_items.append("0")
+                new_data_items += data_items[idx:]
+                # print(new_data_items)
+                # print(" ".join(new_data_items))
+                new_data_line = "{0} | {1}".format(" ".join(new_data_items), unescape(pt_gloss))
+                print("{2} | {0} <=> {1}\n".format(data_items[0],new_offset, file_))
+                destination_file.write(new_data_line+"\n")
 
             # new_data_line = " ".join(data_items[:3])
 
