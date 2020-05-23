@@ -14,6 +14,7 @@ connection = sqlite3.connect("./data/mapping.db")
 def insert_mapping(pwn, new_offset, pos):
     cursor = connection.cursor()
     cursor.execute("INSERT INTO mapping (pwn, new_offset, pos) VALUES (?,?,?)",(int(pwn), int(new_offset), pos,))
+    connection.commit()
     cursor.close()
 
 def offset_processed(pwn, pos):
