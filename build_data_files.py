@@ -48,7 +48,7 @@ pwn_to_ownpt = {
 
 
 files = [
-    # "noun",
+    "noun",
     "verb",
     "adj",
     "adv"
@@ -153,11 +153,12 @@ for file_ in files:
                 # print(new_data_items)
                 # print(" ".join(new_data_items))
                 new_data_line = "{0} | {1}".format(" ".join(new_data_items), unescape(pt_gloss))
-                print("{2} | {0} <=> {1}\n".format(data_items[0],new_offset, file_))
+                print("{2} | {0} <=> {1}".format(data_items[0],new_offset, file_))
                 destination_file.write(new_data_line+"\n")
                 insert_mapping(data_items[0],new_offset, file_)
             t_2 = datetime.datetime.now()
             print("LINE", t_2-t_1)
+            print()
             # new_data_line = " ".join(data_items[:3])
 
             # print(offset, lemma, pt_gloss)
