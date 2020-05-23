@@ -6,6 +6,7 @@ from freeling import Freeling
 from html import unescape
 import io
 import sqlite3
+import datetime
 
 connection = sqlite3.connect("./data/mapping.db")
 
@@ -15,11 +16,14 @@ def insert_mapping(pwn, new_offset, pos):
     cursor.close()
 
 def offset_processed(pwn, pos):
+    t1 = datetime.datetime.now()
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM mapping WHERE pwn = ? and pos = ?",(int(pwn),pos,))
     item = cursor.fetchone()
     cursor.close()
     connection.commit()
+    t2 = datetime.datetime.now()
+    print("TEST", t2-t1)
     return item is not None
 
 nltk_wordnet_data = "/home/jayr/nltk_data/corpora/wordnet"
@@ -44,7 +48,7 @@ pwn_to_ownpt = {
 
 
 files = [
-    "noun",
+    # "noun",
     "verb",
     "adj",
     "adv"
@@ -82,6 +86,7 @@ for file_ in files:
     lemmas = {}
     for line in origin_file.readlines():
         if not line.startswith(' '):
+            t_1 = datetime.datetime.now()
             _data, gloss = line.split("|")
             data_items = _data.strip().split(" ")
             if not offset_processed(data_items[0], file_):
@@ -89,7 +94,10 @@ for file_ in files:
                 new_offset = str(destination_file.tell()).zfill(8)
 
                 # pwn_to_ownpt[file_].write("{0} {1}\n".format(data_items[0],new_offset))
-                insert_mapping(data_items[0],new_offset, file_)
+                t1 = datetime.datetime.now()
+                
+                t2 = datetime.datetime.now()
+                print("INSERT ", t2-t1)
                 idx = [i for i in range(len(data_items))  if len(data_items[i]) == 3 and data_items[i].isnumeric()][0]
                 synset = URIRef(instances[offset])
 
@@ -98,9 +106,12 @@ for file_ in files:
                     pt_gloss = get_translation(gloss.rstrip())
                 else:
                     pt_gloss = pt_gloss.value
+                    pt_gloss = " ".join(pt_gloss.splitlines())
+                pt_gloss = " ".join(pt_gloss.splitlines())
                 
                 words = []
                 symbols = list(set([item for item in data_items[idx:] if not item.isnumeric() and item not in pos_tags]))
+                t1 = datetime.datetime.now()
                 for _, _, sense in g.triples((synset, wnpt.containsWordSense, None)):
                     word_label = g.label(sense)
                     prepared_word = "_".join(str(word_label.strip()).split(" ")).lower()
@@ -118,8 +129,9 @@ for file_ in files:
                 if len(words) == 0:
                     for item in data_items[4:idx]:
                         if not item.isnumeric():
-                            translated = get_translation(" ".join(item.split("_")), exactly=True)
-                            prepared_word = "_".join(translated.split(" ")).lower()
+                            # translated = get_translation(" ".join(item.split("_")), exactly=True)
+                            # prepared_word = "_".join(translated.split(" ")).lower()
+                            prepared_word = item
                             insert_sense_index(prepared_word,new_offset,data_items[2], data_items[1])
                             if prepared_word not in lemmas:
                                 lemmas[prepared_word] = {
@@ -130,7 +142,9 @@ for file_ in files:
                             lemmas[prepared_word]['synsets'].append(new_offset)
                             lemmas[prepared_word]['symbols'] = list(set(lemmas[prepared_word]['symbols'] + symbols))
                             words.append(prepared_word)
-                
+                            
+                t2 = datetime.datetime.now()
+                print("WORDS", t2-t1)
                 new_data_items = [new_offset]+data_items[1:3]+[str(len(words)).zfill(2)]
                 for word in words:
                     new_data_items.append(word)
@@ -141,7 +155,9 @@ for file_ in files:
                 new_data_line = "{0} | {1}".format(" ".join(new_data_items), unescape(pt_gloss))
                 print("{2} | {0} <=> {1}\n".format(data_items[0],new_offset, file_))
                 destination_file.write(new_data_line+"\n")
-
+                insert_mapping(data_items[0],new_offset, file_)
+            t_2 = datetime.datetime.now()
+            print("LINE", t_2-t_1)
             # new_data_line = " ".join(data_items[:3])
 
             # print(offset, lemma, pt_gloss)
