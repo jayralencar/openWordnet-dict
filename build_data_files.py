@@ -7,6 +7,7 @@ from html import unescape
 import io
 import sqlite3
 import datetime
+import sys
 
 connection = sqlite3.connect("./data/mapping.db")
 
@@ -79,7 +80,9 @@ def insert_sense_index(lemma, offset, pos,lexname_index):
     sense_file.write(item+"\n")
 
 
-for file_ in files:
+# for file_ in files:
+file_ = sys.argv[1]
+if file_ in ['noun','verb','adj','adv']:
     origin_file = open("{0}/data.{1}".format(nltk_wordnet_data, file_), "r")
     destination_file = open("{0}/temp_data.{1}".format("./wordnet", file_),"a", encoding="utf-8")
     destination_file.seek(0,io.SEEK_END)
@@ -89,7 +92,8 @@ for file_ in files:
             t_1 = datetime.datetime.now()
             _data, gloss = line.split("|")
             data_items = _data.strip().split(" ")
-            if not offset_processed(data_items[0], file_):
+            # if not offset_processed(data_items[0], file_):
+            if True:
                 offset = "synset-{0}-{1}".format(data_items[0], data_items[2])
                 new_offset = str(destination_file.tell()).zfill(8)
 
@@ -180,5 +184,6 @@ for file_ in files:
             exec_file.write(form+" "+lemma+"\n")
     indx_file.close()
     exec_file.close()
-
-
+    print("FINISHED")
+else:
+    print("Não existe")
